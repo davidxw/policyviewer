@@ -1,6 +1,5 @@
-# get device code
+### Get Authentication Token
 
-#$ClientID = '293f277b-ae2b-4913-8973-e4be8367d161'
 $clientID = '6222f1cd-52dd-4316-ae95-b74149da7b3d'
 $tenantID = 'c2567084-31ef-4a6e-bb65-9fda9cbb7941'
 $scope = "https://management.azure.com/user_impersonation"
@@ -9,8 +8,22 @@ $subscriptionId = "fdeaf022-a889-423d-a9d4-1b913d1c3bbe"
 
 $token = ''
 
+$tokenFileExists = Test-Path .\token.clicml
+
+if ($tokenFileExists)
+{
+    $tokenFile = Import-Clixml .\token.clicml
+
+    if ($tokenFile.expiry -gt (Get-Date))
+    {
+        Write-Host "Using existing token, expiry $($tokenFile.expiry)"
+        $token = $tokenFile.token
+    }
+}
+
 if ($token -eq '')
 {
+    Write-Host "New token required"
     $body = @{
         'client_id' = $clientId
         'scope'  = $scope
@@ -18,7 +31,7 @@ if ($token -eq '')
     $DeviceCodeRequest = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/devicecode" -Method POST -Body $body
 
     Write-Host $DeviceCodeRequest.message -ForegroundColor Yellow
-    Write-Host -NoNewLine 'Press any key to continue...';
+    Write-Host 'Press any key when browser authentication has completed';
     $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
 
     # token request
@@ -31,11 +44,16 @@ if ($token -eq '')
     $TokenRequest = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token" -Method POST -Body $body
 
     $token = $TokenRequest.access_token
-    Write-Host $token
-    Write-Host (Get-Date).AddSeconds($TokenRequest.expires_in)
+    $tokenExpiry = (Get-Date).AddSeconds($TokenRequest.expires_in)
+
+    $tokenFile = [pscustomobject]@{
+        token = $token
+        expiry = $tokenExpiry
+    }
+    $tokenFile | Export-Clixml token.clicml
 }
 
-
+### Get Policies
 
 $apiVersionParam = "api-version=2020-09-01"
 

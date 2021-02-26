@@ -1,10 +1,15 @@
-### Get Authentication Token
+<#
+Use the Azure Resource API to retrieve a list of policy assignments for a subscription.
+#>
+
+<#
+Get Authentication Token from AAD using the device code flow. Note that for convienvience in running and testing the script
+the token is stored locally - this is not recommended in shared environments.
+#>
 
 $clientID = '6222f1cd-52dd-4316-ae95-b74149da7b3d'
 $tenantID = 'c2567084-31ef-4a6e-bb65-9fda9cbb7941'
 $scope = "https://management.azure.com/user_impersonation"
-
-$subscriptionId = "fdeaf022-a889-423d-a9d4-1b913d1c3bbe"
 
 $token = ''
 
@@ -55,10 +60,12 @@ if ($token -eq '')
 
 ### Get Policies
 
+$subscriptionId = "fdeaf022-a889-423d-a9d4-1b913d1c3bbe"
 $apiVersionParam = "api-version=2020-09-01"
 
+# Get poliie assignemnts by subscription
+
 $policyUri = "https://management.azure.com/subscriptions/$subscriptionId/providers/Microsoft.Authorization/policyAssignments?$apiVersionParam"
-#$policyUri = "https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/apitest/providers/Microsoft.Authorization/policyAssignments?$apiVersionParam"
 
 $headers = @{
     'Host' = 'management.azure.com'
@@ -71,6 +78,7 @@ $allPolicies = [System.Collections.ArrayList]@()
 
 Foreach ($definition in $policyDefinitions.value)
 {
+    # if the policy assigment is an initiative, get all the polcicies in the set
     if ($definition.properties.policyDefinitionId -Match "policySetDefinitions")
     {       
         $policySetDefinitions = Invoke-RestMethod -Uri "https://management.azure.com$($definition.properties.policyDefinitionId)?$apiVersionParam" -Method GET -Headers $headers 
@@ -104,8 +112,6 @@ Foreach ($definition in $policyDefinitions.value)
         $null = $allPolicies.Add($row)
     }
 }
-
-$allPolicies 
 
 $allPolicies | Export-Csv -Path .\results.csv -NoTypeInformation
 

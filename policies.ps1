@@ -7,8 +7,11 @@ Get Authentication Token from AAD using the device code flow. Note that for conv
 the token is stored locally - this is not recommended in shared environments.
 #>
 
-$clientID = '6222f1cd-52dd-4316-ae95-b74149da7b3d'
-$tenantID = 'c2567084-31ef-4a6e-bb65-9fda9cbb7941'
+# update with the appropriate Ids
+$subscriptionId = ''
+$clientID = ''
+$tenantID = ''
+
 $scope = "https://management.azure.com/user_impersonation"
 
 $token = ''
@@ -60,7 +63,7 @@ if ($token -eq '')
 
 ### Get Policies
 
-$subscriptionId = "fdeaf022-a889-423d-a9d4-1b913d1c3bbe"
+
 $apiVersionParam = "api-version=2020-09-01"
 
 # Get poliie assignemnts by subscription
